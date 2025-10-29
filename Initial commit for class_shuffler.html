@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班級交換抽籤工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* 自定義 CSS 確保網格在小螢幕上也有良好的間距 */
+        .class-grid-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        }
+        @media (min-width: 640px) {
+            /* 在桌面或平板上，固定為 5 欄排列 (每列最多五個班) */
+            .class-grid-responsive {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        /* 定義卡片顏色組 */
+        .color-set-1 { background-color: #e0f2fe; border-color: #90cdf4; color: #2b6cb0; } /* blue */
+        .color-set-2 { background-color: #fefcbf; border-color: #faf089; color: #b7791f; } /* yellow */
+        .color-set-3 { background-color: #fed7d7; border-color: #feb2b2; color: #c53030; } /* red */
+        .color-set-4 { background-color: #e9d8fd; border-color: #d6bcfa; color: #6b46c1; } /* purple */
+        .color-set-default { background-color: #edf2f7; border-color: #cbd5e0; color: #4a5568; } /* gray */
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
+
+    <div id="app" class="w-full max-w-6xl bg-white p-6 sm:p-10 rounded-xl shadow-2xl border border-gray-100">
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-indigo-700">
+            班級交換抽籤工具
+        </h1>
+        <p class="text-center text-gray-500 mb-8">
+            請設定年級和班級數量，排列會動態更新，然後點擊按鈕進行抽籤交換。
+        </p>
+
+        <!-- 設定區塊 --><div class="flex flex-col md:flex-row gap-4 mb-8 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            
+            <!-- 年級選擇 --><div class="flex-1">
+                <label for="gradeSelect" class="block text-sm font-medium text-indigo-700 mb-1">選擇年級 (七, 八, 九):</label>
+                <select id="gradeSelect" class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <option value="七">七年級</option>
+                    <option value="八">八年級</option>
+                    <option value="九">九年級</option>
+                </select>
+            </div>
+
+            <!-- 班級數輸入 --><div class="flex-1">
+                <label for="numClassesInput" class="block text-sm font-medium text-indigo-700 mb-1">班級總數 (1 - 20):</label>
+                <input type="number" id="numClassesInput" min="1" max="20" value="15" 
+                       class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
+                       placeholder="輸入班級數">
+            </div>
+
+            <!-- 移除冗餘的建立班級排列按鈕，因為輸入會即時觸發更新 -->
+        </div>
+
+        <!-- 班級顯示區塊 --><div id="classDisplays" class="flex flex-col lg:flex-row gap-8 mb-8">
+            <!-- 原始班級 -->
+            <!-- 新增 lg:w-1/2 確保在桌面版均分寬度 -->
+            <div id="originalClassesSection" class="flex-1 lg:w-1/2 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+                <h2 id="originalTitle" class="text-xl font-bold text-gray-700 mb-4 text-center">原始班級排列</h2>
+                <div id="originalClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
+                    <!-- 原始班級卡片將會被 JavaScript 插入到這裡 --></div>
+            </div>
+
+            <!-- 交換後班級 -->
+            <!-- 新增 lg:w-1/2 確保在桌面版均分寬度 -->
+            <div id="shuffledClassesSection" class="flex-1 lg:w-1/2 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+                <h2 id="currentTitle" class="text-xl font-bold text-indigo-700 mb-4 text-center">目前的班級排列</h2>
+                <div id="currentClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
+                    <!-- 班級卡片將會被 JavaScript 插入到這裡 --></div>
+            </div>
+        </div>
+
+
+        <!-- 交換按鈕 --><div class="text-center">
+            <button id="swapButton" disabled
+                    class="px-10 py-4 text-xl font-bold text-white bg-green-600 rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
+                🚀 隨機交換班級 🚀
+            </button>
+        </div>
+
+        <!-- 訊息顯示區 --><p id="message" class="mt-6 text-center text-red-500 font-medium"></p>
+    </div>
+
+    <script>
+        // 設定 Firebase 所需的通用變數，雖然此應用程式不使用 Firestore
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        // DOM 元素參考
+        const gradeSelect = document.getElementById('gradeSelect');
+        const numClassesInput = document.getElementById('numClassesInput');
+        const swapButton = document.getElementById('swapButton');
+        const originalClassesSection = document.getElementById('originalClassesSection');
+        const originalClassGridContainer = document.getElementById('originalClassGridContainer');
+        const currentClassGridContainer = document.getElementById('currentClassGridContainer');
+        const messageDisplay = document.getElementById('message');
+        // 標題元素的 DOM 參考 (雖然標題內容不再動態更新，但仍需引用)
+        const originalTitle = document.getElementById('originalTitle');
+        const currentTitle = document.getElementById('currentTitle');
+
+        // 應用程式狀態
+        let originalClasses = []; // 儲存最原始的班級順序
+        let currentClasses = [];  // 儲存當前顯示的班級順序 (會被打亂)
+        let currentGrade = '七';
+        let currentNumClasses = 15;
+
+        // 班級卡片的顏色組
+        const classCardColors = ['color-set-1', 'color-set-2', 'color-set-3', 'color-set-4'];
+
+        /**
+         * 顯示錯誤或成功訊息。
+         * @param {string} text 要顯示的訊息內容。
+         * @param {string} type 訊息類型 ('error' 或 'success')。
+         */
+        function showMessage(text, type = 'error') {
+            messageDisplay.textContent = text;
+            messageDisplay.className = `mt-6 text-center font-medium ${type === 'error' ? 'text-red-500' : 'text-blue-600'}`;
+            setTimeout(() => {
+                messageDisplay.textContent = '';
+            }, 3000); // 3 秒後清除訊息
+        }
+
+        /**
+         * 初始化班級陣列。
+         * 根據選定的年級和班級數量建立初始班級名稱。
+         */
+        function initializeClasses() {
+            let selectedGrade = gradeSelect.value;
+            let num = parseInt(numClassesInput.value, 10);
+
+            // 驗證輸入範圍
+            if (isNaN(num) || num < 1 || num > 20) {
+                showMessage('班級總數必須在 1 到 20 之間。', 'error');
+                numClassesInput.value = currentNumClasses;
+                return;
+            }
+
+            // --- 動態更新邏輯開始 ---
+            const numChanged = currentNumClasses !== num;
+            const gradeChanged = currentGrade !== selectedGrade;
+            
+            // 更新狀態變數
+            currentNumClasses = num;
+            currentGrade = selectedGrade;
+            
+            // 只有在班級數或年級改變時，才重新建立/更新班級陣列
+            if (numChanged || gradeChanged || originalClasses.length === 0) {
+                
+                if (numChanged || originalClasses.length === 0) {
+                    // 如果班級數改變，重新建立所有班級
+                    originalClasses = []; 
+                    for (let i = 1; i <= currentNumClasses; i++) {
+                        originalClasses.push(`${currentGrade}年${i}班`);
+                    }
+                    currentClasses = [...originalClasses]; // 複製一份作為當前班級
+                } else if (gradeChanged) {
+                    // 如果年級改變 (但班級數不變)，更新名稱，保持被打亂的順序
+                    
+                    // 1. 更新原始班級名稱
+                    originalClasses = originalClasses.map((_, i) => `${currentGrade}年${i + 1}班`);
+                    
+                    // 2. 建立映射 (Key: 班級數字, Value: 新的完整名稱)
+                    const originalMap = originalClasses.reduce((acc, name) => {
+                        const match = name.match(/(\d+)/);
+                        if (match) {
+                            const classNumber = match[1]; 
+                            acc[classNumber] = name;
+                        }
+                        return acc;
+                    }, {});
+                    
+                    // 3. 更新 currentClasses 陣列中的年級名稱，同時保留其位置
+                    currentClasses = currentClasses.map(oldName => {
+                        const classNumberMatch = oldName.match(/(\d+)/);
+                        const classNumber = classNumberMatch ? classNumberMatch[1] : null;
+                        
+                        // 使用新的 map 來獲取正確的新名稱
+                        return originalMap[classNumber] || `${currentGrade}年${classNumber}班`;
+                    }).filter(name => name.endsWith('班'));
+                }
+            }
+            // --- 動態更新邏輯結束 ---
+            
+            // ** 移除標題動態更新邏輯 **
+            // 標題保持靜態設置: "原始班級排列" 和 "目前的班級排列"
+
+
+            // 啟用交換按鈕
+            swapButton.disabled = false;
+            
+            // 首次渲染原始班級和當前班級
+            renderClasses(originalClassGridContainer, originalClasses, true); // true 表示是原始班級
+            renderClasses(currentClassGridContainer, currentClasses, false); // false 表示是當前班級
+
+            // 初始時隱藏原始班級區塊
+            const isShuffled = originalClasses.some((name, i) => name !== currentClasses[i]);
+            if (!isShuffled) {
+                originalClassesSection.classList.add('hidden'); 
+            }
+        }
+
+        /**
+         * 使用 Fisher-Yates 算法隨機打亂班級陣列 (加入動畫)。
+         */
+        function shuffleClasses() {
+            swapButton.disabled = true;
+            swapButton.textContent = '🎲 抽籤中...';
+            showMessage('正在進行隨機抽籤，請稍候...', 'success'); 
+
+            // 隨機閃爍動畫
+            const intermediateShuffle = () => {
+                let tempArray = [...currentClasses];
+                let currentIndex = tempArray.length;
+                while (currentIndex !== 0) {
+                    let randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [tempArray[currentIndex], tempArray[randomIndex]] = [
+                        tempArray[randomIndex], tempArray[currentIndex]];
+                }
+                renderClasses(currentClassGridContainer, tempArray, false);
+            };
+
+            const shuffleInterval = setInterval(intermediateShuffle, 80); 
+
+            // 1 秒後停止動畫並顯示結果
+            setTimeout(() => {
+                clearInterval(shuffleInterval); 
+
+                // --- 最終打亂邏輯 (Fisher-Yates) ---
+                let array = currentClasses;
+                let currentIndex = array.length, randomIndex;
+
+                while (currentIndex !== 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [
+                        array[randomIndex], array[currentIndex]];
+                }
+                // --- 最終打亂邏輯結束 ---
+
+                // 顯示結果
+                originalClassesSection.classList.remove('hidden');
+                renderClasses(originalClassGridContainer, originalClasses, true); // 渲染原始
+                renderClasses(currentClassGridContainer, currentClasses, false); // 渲染最終打亂結果
+
+                // 重置按鈕和訊息
+                swapButton.textContent = '🚀 隨機交換班級 🚀';
+                swapButton.disabled = false;
+                showMessage('班級交換抽籤完成！', 'success');
+            }, 1000); // 動畫持續 1 秒
+        }
+
+        /**
+         * 渲染班級排列到指定的容器中，並使用列優先順序排列 (固定 5 行)。
+         * @param {HTMLElement} container 要渲染的 DOM 容器。
+         * @param {Array<string>} classes 班級名稱陣列 (原始順序)。
+         * @param {boolean} isOriginal 是否為原始班級 (用於調整樣式)。
+         */
+        function renderClasses(container, classes, isOriginal) {
+            container.innerHTML = ''; // 清空現有內容
+
+            const N = classes.length;
+            if (N === 0) return;
+            
+            // 網格佈局參數
+            const C_MAX = 5; // CSS 設置的最大欄數 (5 欄)
+            const R_MAX = 5; // 依照使用者要求，固定每欄最多顯示 5 個班級 (5 行)
+            
+            // 根據 N 和 R_MAX，計算實際需要的欄數 (C_NEEDED)
+            const C_NEEDED = Math.ceil(N / R_MAX); 
+            
+            // 總共要渲染的網格單元數 (最多 5x5 = 25 個)
+            const TOTAL_GRID_CELLS = R_MAX * C_MAX;
+            
+            // 重新排序陣列以實現列優先的視覺效果
+            const transposedClasses = [];
+
+            // 迭代渲染位置 (k)，對應到 Row-First 的視覺位置 (0 到 24)
+            for (let k = 0; k < TOTAL_GRID_CELLS; k++) {
+                
+                // (r, c) 是視覺上的行/欄索引
+                const r = Math.floor(k / C_MAX); // 視覺上的行索引 (0-4)
+                const c = k % C_MAX; // 視覺上的欄索引 (0-4)
+                
+                // 找出在 Column-First 邏輯中，應該放在 (r, c) 位置的原始索引 i
+                // i = 原始陣列索引 = r (行) + c (欄) * R_MAX (固定總行數: 5)
+                const i = r + c * R_MAX;
+
+                // 只有當：1. 欄索引 (c) 在需要的範圍內 (C_NEEDED)，AND 2. 原始索引 (i) 在班級總數內 (N)
+                if (c < C_NEEDED && i < N) {
+                   // 這是有效的班級
+                   transposedClasses.push(classes[i]);
+                } else {
+                   // 這是空的佔位符 (超出 N 或超出 C_NEEDED)
+                   transposedClasses.push(null); 
+                }
+            }
+            
+            // 使用 transposedClasses 陣列進行渲染
+            transposedClasses.forEach((className, index) => {
+                if (className === null) {
+                    // 插入一個空的佔位符 div
+                    const emptyCard = document.createElement('div');
+                    // 使用 opacity-0 和 pointer-events-none 確保它不可見且不影響點擊
+                    emptyCard.className = "p-4 sm:p-5 h-full opacity-0 pointer-events-none"; 
+                    container.appendChild(emptyCard);
+                    return; 
+                }
+                
+                const classCard = document.createElement('div');
+                
+                // 使用預定義的顏色組 (index 仍然是 k, 也就是視覺上的順序)
+                const colorClass = classCardColors[index % classCardColors.length] || 'color-set-default';
+
+                // 修正了班級卡片樣式，增加了 flex-col 等確保文字排版正確
+                classCard.className = `p-4 sm:p-5 text-center font-bold text-lg rounded-lg shadow-md transition transform duration-300 border-2 ${colorClass} flex flex-col justify-center items-center h-full`;
+                
+                if (!isOriginal) {
+                    classCard.classList.add('hover:scale-[1.02]');
+                } else {
+                    // 原始班級的字體可以稍微淡一點
+                    classCard.classList.add('opacity-90');
+                }
+                
+                // --- 文字排版修正：拆分班級名稱為多個 span ---
+                const gradeMatch = className.match(/(\S+年)(\d+)(班)/);
+                if (gradeMatch) {
+                    
+                    const gradeText = document.createElement('span');
+                    gradeText.className = 'whitespace-nowrap text-sm'; // 七年
+                    gradeText.textContent = gradeMatch[1]; 
+                    classCard.appendChild(gradeText);
+                    
+                    const classNumberText = document.createElement('span');
+                    classNumberText.className = 'whitespace-nowrap text-2xl font-extrabold'; // 數字
+                    classNumberText.textContent = gradeMatch[2]; 
+                    classCard.appendChild(classNumberText);
+
+                    const classSuffixText = document.createElement('span');
+                    classSuffixText.className = 'whitespace-nowrap text-sm'; // 班
+                    classSuffixText.textContent = gradeMatch[3]; 
+                    classCard.appendChild(classSuffixText);
+
+                } else {
+                    // 如果格式不符合，就直接顯示原始文字
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = className;
+                    classCard.appendChild(textSpan);
+                }
+                // --- 文字排版修正結束 ---
+
+                container.appendChild(classCard);
+            });
+        }
+
+        /**
+         * 處理按鈕點擊事件和初始化設定。
+         */
+        function setupEventListeners() {
+            // 監聽班級數和年級的變動，實現動態更新
+            numClassesInput.addEventListener('input', initializeClasses);
+            gradeSelect.addEventListener('change', initializeClasses);
+
+            // 隨機交換按鈕
+            swapButton.addEventListener('click', shuffleClasses);
+
+
+            // 初始化時建立一個預設配置
+            initializeClasses();
+        }
+
+        // 程式啟動
+        window.onload = function() {
+            setupEventListeners();
+        };
+
+    </script>
+
+</body>
+</html>
