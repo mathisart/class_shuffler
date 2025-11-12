@@ -1,379 +1,934 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>班級交換抽籤工具</title>
-    <!-- 載入 Tailwind CSS 框架 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* 基礎樣式設定 */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班級交換抽籤工具</title>
+    <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      overflow-x: hidden;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fadeInDown 0.8s ease-out;
+    }
+    
+    .header h1 {
+      color: #ffffff;
+      font-size: 3rem;
+      margin: 0 0 1rem 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      color: #e0e7ff;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    
+    .logo {
+      width: 100px;
+      height: 100px;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .control-panel {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .settings-group {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .setting-item {
+      flex: 1;
+  x   min-width: 200px;
+      max-width: 300px;
+    }
+    
+    .setting-item label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .select-input, .number-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2d3748;
+      background: white;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .select-input:focus, .number-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .number-input {
+      text-align: center;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    
+    .btn {
+      padding: 1rem 2.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    }
+    
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    
+    .classes-grid {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .grid-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .grid-header h2 {
+      color: #2d3748;
+      margin: 0 0 0.5rem 0;
+      font-size: 1.8rem;
+    }
+    
+    .grid-subtitle {
+      color: #718096;
+      font-size: 1rem;
+    }
+    
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, auto);
+      grid-auto-flow: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .class-card {
+      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 3px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .class-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .class-card.swapped {
+      animation: highlight 1s ease-out;
+      border-color: #10b981;
+    }
+    
+    .position-number {
+      font-size: 0.9rem;
+      color: #a0aec0;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .class-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2d3748;
+      margin: 0.5rem 0;
+    }
+    
+    .arrow-indicator {
+      font-size: 1.2rem;
+      color: #10b981;
+      margin: 0.25rem 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .class-card.swapped .arrow-indicator {
+      opacity: 1;
+    }
+    
+    .original-class {
+      font-size: 0.85rem;
+      color: #718096;
+      font-weight: 500;
+    }
+    
+    .history-section {
+      background: white;
+  _x000D_      border-radius: 20px;
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+    
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .history-header h3 {
+      color: #2d3748;
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    
+    .history-count {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .history-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .history-item {
+      background: #f7fafc;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+    }
+    
+    .history-item-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    
+    .history-time {
+      color: #e0e7ff;
+      font-size: 0.85rem;
+    }
+    
+    .history-table-container {
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    
+    .history-table thead {
+      background: #edf2f7;
+    }
+    
+    .history-table th {
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      color: #4a5568;
+      border-bottom: 2px solid #cbd5e0;
+    }
+    
+    .history-table td {
+      padding: 0.6rem 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+      color: #2d3748;
+    }
+_x000D_    
+    .history-table tbody tr:hover {
+      background: #f7fafc;
+    }
+    
+    .history-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .arrow-cell {
+      color: #10b981;
+S     font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    .class-cell {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .position-cell {
+      color: #718096;
+      font-weight: 500;
+    }
+    
+    .empty-history {
+      text-align: center;
+      padding: 2rem;
+      color: #a0aec0;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      font-weight: 600;
+      animation: slideInRight 0.3s ease-out;
+    }
+    
+    .toast.success {
+      background: #10b981;
+      color: white;
+    }
+    
+    .toast.error {
+      background: #ef4444;
+      color: white;
+    }
+    
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0);
+}
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    @keyframes highlight {
+      0%, 100% {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      }
+      50% {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+A     }
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @media (max-width: 1200px) {
+      .class-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .class-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .settings-group {
+        flex-direction: column;
+      }
+      
+      .setting-item {
+        max-width: 100%;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .history-table {
+        font-size: 0.8rem;
+      }
+      
+      .history-table th,
+      .history-table td {
+        padding: 0.5rem 0.25rem;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="container">
+   <header class="header">
+    <div class="logo-container">
+     <svg class="logo" viewbox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><defs>
+       <lineargradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+       </lineargradient>
+      </defs> <circle cx="60" cy="60" r="55" fill="white" opacity="0.2" /> <rect x="25" y="35" width="30" height="40" rx="5" fill="url(#grad1)" transform="rotate(-15 40 55)">
+       <animatetransform attributename="transform" type="rotate" from="-15 40 55" to="15 40 55" dur="2s" repeatcount="indefinite" direction="alternate" />
+x     </rect> <rect x="65" y="35" width="30" height="40" rx="5" fill="#10b981" transform="rotate(15 80 55)">
+       <animatetransform attributename="transform" type="rotate" from="15 80 55" to="-15 80 55" dur="2s" repeatcount="indefinite" direction="alternate" />
+      </rect> <path d="M 45 55 Q 60 45 75 55" stroke="white" stroke-width="3" fill="none" stroke-linecap="round">
+       <animate attributename="d" from="M 45 55 Q 60 45 75 55" to="M 45 55 Q 60 65 75 55" dur="2s" repeatcount="indefinite" direction="alternate" />
+      </path>
+     </svg>
+    </div>
+    <h1 id="main-title">班級交換抽籤工具</h1>
+    <p id="subtitle">隨機對調班級位置</p>
+   </header>
+   <section class="control-panel">
+    <div class="settings-group">
+     <div class="setting-item"><label for="grade-select">選擇年級</label> <select id="grade-select" class="select-input"> <option value="7">七年級</option> <option value="8">八年級</option> <option value="9">九年級</option> </select>
+     </div>
+     <div class="setting-item"><label for="class-count">班級數量</label> <input type="number" id="class-count" class="number-input" min="1" max="20" value="20">
+     </div>
+    </div>
+    <div class="action-buttons"><button class="btn btn-primary" id="shuffle-btn"> <span>🎲</span> <span id="shuffle-btn-text">開始隨機對調</span> </button> <button class="btn btn-secondary" id="reset-btn"> <span>🔄</span> <span id="reset-btn-text">恢復原始順序</span> </button>
+    </div>
+   </section>
+   <section class="classes-grid">
+    <div class="grid-header">
+     <h2>班級位置</h2>
+     <p class="grid-subtitle" id="grid-subtitle">目前共 20 個班級</p>
+    </div>
+    <div class="class-grid" id="class-grid"></div>
+   </section>
+   <section class="history-section">
+    <div class="history-header">
+     <h3>對調記錄</h3>
+     <div class="history-count" id="history-count">
+      共 0 次
+     </div>
+    </div>
+    <div class="history-list" id="history-list">
+     <div class="empty-history">
+      尚無對調記錄
+     </div>
+    </div>
+   </section>
+  </main>
+  <script>
+    const defaultConfig = {
+      main_title: '班級交換抽籤工具',
+      subtitle: '隨機對調班級位置',
+      shuffle_button_text: '開始隨機對調',
+      reset_button_text: '恢復原始順序',
+      background_color: '#667eea',
+      surface_color: '#ffffff',
+      text_color: '#2d3748',
+      primary_action_color: '#10b981',
+      secondary_action_color: '#f59e0b',
+      font_family: 'Microsoft JhengHei',
+      font_size: 16
+    };
 
-        /* 網格佈局設置：確保卡片在網格中居中並維持 5 欄 */
-        .class-grid-responsive {
-            /* 預設: 自動適應，保持響應性 */
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            justify-items: center; /* 網格項目居中 */
-            gap: 1rem; /* 增加間距，防止卡片緊貼 */
-        }
-        @media (min-width: 640px) {
-            /* 桌面版修正: 重新使用彈性寬度 (1fr)，解決溢出問題，並確保置中 */
-            .class-grid-responsive {
-                grid-template-columns: repeat(5, 1fr); /* 使用 1fr 確保彈性適應寬度 */
-                justify-content: center; /* 置中網格內的內容 */
-            }
-        }
-        /* 移除之前嘗試置中時添加的固定寬度和 margin: auto，讓 Flexbox 重新負責均分 */
+    let currentGrade = 7;
+    let currentClassCount = 20;
+    let originalClasses = [];
+    let currentClasses = [];
+    let allRecords = [];
 
+    function generateClasses(grade, count) {
+      const classes = [];
+      for (let i = 1; i <= count; i++) {
+        classes.push(`${grade}${String(i).padStart(2, '0')}`);
+      }
+      return classes;
+    }
 
-        /* 定義卡片顏色組 */
-        .color-set-1 { background-color: #e0f2fe; border-color: #90cdf4; color: #2b6cb0; } /* 藍色 */
-        .color-set-2 { background-color: #fefcbf; border-color: #faf089; color: #b7791f; } /* 黃色 */
-        .color-set-3 { background-color: #fed7d7; border-color: #feb2b2; color: #c53030; } /* 紅色 */
-        .color-set-4 { background-color: #e9d8fd; border-color: #d6bcfa; color: #6b46c1; } /* 紫色 */
-        .color-set-default { background-color: #edf2f7; border-color: #cbd5e0; color: #4a5568; } /* 灰色 */
+    function updateClasses() {
+      originalClasses = generateClasses(currentGrade, currentClassCount);
+      currentClasses = [...originalClasses];
+    }
 
-        /* 一般卡片樣式 (長方形，類似撲克牌比例) */
-        .class-card {
-            /* 修正: 移除固定寬度，改用 max-width 和 max-height，讓其在空間不足時能縮小 */
-            width: 100%; /* 佔滿網格單元寬度 */
-            max-width: 120px; /* 最大寬度不超過撲克牌尺寸 */
-            height: 180px; /* 固定高度，但會在空間不足時被擠壓 */
-            
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            justify-self: center; /* 讓卡片在網格單元中置中 */
-            padding: 0.5rem;
-            border: 2px solid;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column; 
-            justify-content: center;
-            align-items: center;
-            text-align: center; /* 確保文字排版中心對齊 */
-        }
-        .class-card:hover {
-            transform: scale(1.05);
-        }
+    function renderClassGrid() {
+      const grid = document.getElementById('class-grid');
+      const subtitle = document.getElementById('grid-subtitle');
+      grid.innerHTML = '';
+      
+      const gradeText = currentGrade === 7 ? '七年級' : currentGrade === 8 ? '八年級' : '九年級';
+      subtitle.textContent = `${gradeText} - 共 ${currentClassCount} 個班級`;
+      
+      currentClasses.forEach((className, index) => {
+        const card = document.createElement('div');
+        card.className = 'class-card';
+        card.id = `class-${index}`;
+        
+        const isSwapped = className !== originalClasses[index];
+        if (isSwapped) {
+          card.classList.add('swapped');
+        }
+        
+        card.innerHTML = `
+          <div class="position-number">位置 ${index + 1}</div>
+          <div class="class-number">${className}</div>
+          ${isSwapped ? `
+            <div class="arrow-indicator">↑</div>
+            <div class="original-class">原: ${originalClasses[index]}</div>
+          ` : ''}
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
 
-        /* 文字排版樣式 (確保文字清晰且垂直堆疊) */
-        .class-text-sm { font-size: 0.8em; }
-        .class-text-lg { font-size: 1.8em; font-weight: 800; }
+    function shuffleArray(array) {
+      const n = array.length;
+      const newArray = [...array];
+      let attempts = 0;
+      const maxAttempts = 1000;
+      
+      while (attempts < maxAttempts) {
+        for (let i = n - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        
+        let allMoved = true;
+        for (let i = 0; i < n; i++) {
+          if (newArray[i] === array[i]) {
+            allMoved = false;
+            break;
+          }
+        }
+        
+        if (allMoved) {
+          return newArray;
+        }
+        
+        attempts++;
+      }
+      
+      for (let i = 0; i < n; i++) {
+        newArray[i] = array[(i + 1) % n];
+      }
+      
+      return newArray;
+    }
 
-        /* 針對小螢幕調整尺寸 */
-        @media (max-width: 639px) {
-            .class-card {
-                max-width: 100px; 
-                height: 150px;
-            }
-            .class-text-sm { font-size: 0.7em; }
-            .class-text-lg { font-size: 1.5em; }
-        }
-    </style>
-</head>
-<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
+    async function handleShuffle() {
+      if (allRecords.length >= 999) {
+        showToast('已達到記錄上限 (999 筆)，請先清除部分記錄', 'error');
+        return;
+      }
 
-    <div id="app" class="w-full max-w-6xl bg-white p-6 sm:p-10 rounded-xl shadow-2xl border border-gray-100">
+      const shuffleBtn = document.getElementById('shuffle-btn');
+      shuffleBtn.disabled = true;
+      shuffleBtn.innerHTML = '<span class="loading"></span><span>對調中...</span>';
+      
+      currentClasses = shuffleArray(currentClasses);
+      
+      const swaps = [];
+      currentClasses.forEach((className, index) => {
+        swaps.push(`${index + 1}|${originalClasses[index]}|${className}`);
+      });
+      
+      const gradeText = currentGrade === 7 ? '七年級' : currentGrade === 8 ? '八年級' : '九年級';
+      
+      const record = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        grade: gradeText,
+        class_count: currentClassCount,
+        shuffle_history: swaps.join(';;'),
+        timestamp: new Date().toISOString()
+      };
+      
+      // --- 修改開始：使用 localStorage 儲存 ---
+      try {
+        allRecords.push(record);
+        localStorage.setItem('shuffleHistory', JSON.stringify(allRecords));
+        
+        renderHistory(allRecords); // 手動觸發歷史紀錄更新
+        renderClassGrid();
+        showToast(`成功對調 ${currentClassCount} 個班級位置`, 'success');
+      } catch (e) {
+        console.error('儲存失敗:', e);
+        showToast('對調失敗，請重試', 'error');
+        // 如果儲存失敗，把剛剛加進去的紀錄移除
+        allRecords.pop();
+      }
+      // --- 修改結束 ---
+      
+      shuffleBtn.disabled = false;
+      shuffleBtn.innerHTML = `<span>🎲</span><span id="shuffle-btn-text">${defaultConfig.shuffle_button_text}</span>`;
+    }
 
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-indigo-700">
-            班級交換抽籤工具
-        </h1>
-        <p class="text-center text-gray-500 mb-8">
-            請設定年級和班級數量，排列會動態更新，然後點擊按鈕進行抽籤交換。
-        </p>
+    function handleReset() {
+      currentClasses = [...originalClasses];
+      renderClassGrid();
+      showToast('已恢復原始順序', 'success');
+    }
 
-        <!-- 設定區塊 --><div class="flex flex-col md:flex-row gap-4 mb-8 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-            
-            <!-- 年級選擇 --><div class="flex-1">
-                <label for="gradeSelect" class="block text-sm font-medium text-indigo-700 mb-1">選擇年級 (七, 八, 九):</label>
-                <select id="gradeSelect" class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                    <option value="七">七年級</option>
-                    <option value="八">八年級</option>
-                    <option value="九">九年級</option>
-                </select>
-            </div>
+    function renderHistory(data) {
+      allRecords = data; // 確保全域變數同步
+      const historyList = document.getElementById('history-list');
+      const historyCount = document.getElementById('history-count');
+      
+      historyCount.textContent = `共 ${data.length} 次`;
+      
+      if (data.length === 0) {
+        historyList.innerHTML = '<div class="empty-history">尚無對調記錄</div>';
+        return;
+      }
+      
+      const sortedData = [...data].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+      
+      historyList.innerHTML = sortedData.map(record => {
+        const date = new Date(record.timestamp);
+        const timeStr = date.toLocaleString('zh-TW', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        const swaps = record.shuffle_history.split(';;');
+        const tableRows = swaps.map(swap => {
+          const [position, original, newClass] = swap.split('|');
+          return `
+            <tr>
+              <td class="position-cell">位置 ${position}</td>
+              <td class="class-cell">${original}</td>
+              <td class="arrow-cell">→</td>
+              <td class="class-cell">${newClass}</td>
+            </tr>
+          `;
+        }).join('');
+        
+        return `
+          <div class="history-item">
+            <div class="history-item-header">
+              <span><strong>${record.grade || '七年級'}</strong> (${record.class_count || 20}班)</span>
+              <span class="history-time">${timeStr}</span>
+            </div>
+            <div class="history-table-container">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>位置</th>
+                    <th>原班級</th>
+                    <th></th>
+                    <th>新班級</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-            <!-- 班級數輸入 --><div class="flex-1">
-                <label for="numClassesInput" class="block text-sm font-medium text-indigo-700 mb-1">班級總數 (1 - 20):</label>
-                <input type="number" id="numClassesInput" min="1" max="20" value="20" 
-                       class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
-                       placeholder="輸入班級數">
-            </div>
-        </div>
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
 
-        <!-- 班級顯示區塊 --><div id="classDisplays" class="flex flex-col lg:flex-row gap-8 mb-8">
-            
-            <!-- 原始班級排列 (左側) -->
-            <div id="originalClassesSection" class="flex-1 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
-                <h2 id="originalTitle" class="text-xl font-bold text-gray-700 mb-4 text-center">原始班級排列</h2>
-                <div id="originalClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
-                    <!-- 原始班級卡片將會被 JavaScript 插入到這裡 --></div>
-            </div>
+    // --- 移除了 dataHandler ---
 
-            <!-- 目前的班級排列 (右側) -->
-            <div id="shuffledClassesSection" class="flex-1 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
-                <h2 id="currentTitle" class="text-xl font-bold text-indigo-700 mb-4 text-center">目前的班級排列</h2>
-                <div id="currentClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
-                    <!-- 班級卡片將會被 JavaScript 插入到這裡 --></div>
-            </div>
-        </div>
+    async function onConfigChange(config) {
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const baseFontStack = 'PingFang TC, sans-serif';
+      
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, #764ba2 100%)`;
+      
+      document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+      document.getElementById('main-title').style.fontSize = `${baseSize * 1.875}px`;
+      document.getElementById('main-title').style.color = config.surface_color || defaultConfig.surface_color;
+      
+      document.getElementById('subtitle').textContent = config.subtitle || defaultConfig.subtitle;
+      document.getElementById('subtitle').style.fontSize = `${baseSize * 1.25}px`;
+      
+      document.getElementById('shuffle-btn-text').textContent = config.shuffle_button_text || defaultConfig.shuffle_button_text;
+      document.getElementById('reset-btn-text').textContent = config.reset_button_text || defaultConfig.reset_button_text;
+      
+      const primaryColor = config.primary_action_color || defaultConfig.primary_action_color;
+      const secondaryColor = config.secondary_action_color || defaultConfig.secondary_action_color;
+      
+      document.getElementById('shuffle-btn').style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`;
+      document.getElementById('reset-btn').style.background = `linear-gradient(135deg, ${secondaryColor} 0%, ${secondaryColor}dd 100%)`;
+      
+      document.querySelectorAll('.control-panel, .classes-grid, .history-section').forEach(el => {
+C       el.style.background = config.surface_color || defaultConfig.surface_color;
+      });
+      
+      document.querySelectorAll('.grid-header h2, .history-header h3, .class-number').forEach(el => {
+        el.style.color = config.text_color || defaultConfig.text_color;
+      });
+    }
 
+    // --- 全新的 init 函數 ---
+    async function init() {
+      updateClasses();
+      renderClassGrid();
+      
+      document.getElementById('grade-select').addEventListener('change', (e) => {
+        currentGrade = parseInt(e.target.value);
+        updateClasses();
+        renderClassGrid();
+      });
+      
+      document.getElementById('class-count').addEventListener('change', (e) => {
+        let value = parseInt(e.target.value);
+        if (value < 1) value = 1;
+        if (value > 20) value = 20;
+        e.target.value = value;
+        currentClassCount = value;
+        updateClasses();
+        renderClassGrid();
+      });
+      
+      document.getElementById('shuffle-btn').onclick = handleShuffle;
+      document.getElementById('reset-btn').onclick = handleReset;
+      
+      // 1. 從 localStorage 讀取儲存的紀錄
+      const savedData = localStorage.getItem('shuffleHistory');
+      if (savedData) {
+        allRecords = JSON.parse(savedData);
+      } else {
+        allRecords = []; // 如果沒有儲存過，就建立一個空陣列
+      }
+      // 2. 讀取後，直接渲染歷史紀錄
+      renderHistory(allRecords);
+      
+      // 檢查 window.elementSdk 是否存在 (Canva環境)
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (value) => {
+                  config.background_color = value;
+                  window.elementSdk.setConfig({ background_color: value });
+        _x000D_       }
+              },
+              {
+                get: () => config.surface_color || defaultConfig.surface_color,
+                set: (value) => {
+                  config.surface_color = value;
+                  window.elementSdk.setConfig({ surface_color: value });
+                }
+              },
+              {
+              _x000D_   get: () => config.text_color || defaultConfig.text_color,
+      _x000D_           set: (value) => {
+                  config.text_color = value;
+                  window.elementSdk.setConfig({ text_color: value });
+                }
+              },
+              {
+                get: () => config.primary_action_color || defaultConfig.primary_action_color,
+                set: (value) => {
+                  config.primary_action_color = value;
+                  window.elementSdk.setConfig({ primary_action_color: value });
+                }
+              },
+              {
+                get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+                set: (value) => {
+                  config.secondary_action_color = value;
+                  window.elementSdk.setConfig({ secondary_action_color: value });
+                }
+              }
+  _x000D_         ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (value) => {
+                config.font_family = value;
+                window.elementSdk.setConfig({ font_family: value });
+              }
+            },
+            fontSizeable: {
+              get: () => config.font_size || defaultConfig.font_size,
+              set: (value) => {
+                config.font_size = value;
+  S               window.elementSdk.setConfig({ font_size: value });
+              }
+            }
+          }),
+          mapToEditPanelValues: (config) => new Map([
+Show           ['main_title', config.main_title || defaultConfig.main_title],
+            ['subtitle', config.subtitle || defaultConfig.subtitle],
+            ['shuffle_button_text', config.shuffle_button_text || defaultConfig.shuffle_button_text],
+            ['reset_button_text', config.reset_button_text || defaultConfig.reset_button_text]
+          ])
+        });
+      } else {
+        // 如果 elementSdk 不在 (例如在 GitHub Pages)，
+U       // 就手動呼叫一次 onConfigChange 來套用預設樣式
+        onConfigChange(defaultConfig);
+      }
+    }
 
-        <!-- 交換按鈕 --><div class="text-center">
-            <button id="swapButton" disabled
-                    class="px-10 py-4 text-xl font-bold text-white bg-green-600 rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
-                🚀 隨機交換班級 🚀
-            </button>
-        </div>
-
-        <!-- 訊息顯示區 --><p id="message" class="mt-6 text-center text-red-500 font-medium"></p>
-    </div>
-
-    <script>
-        // --- 變數初始化 ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-
-        // DOM 元素參考
-        const gradeSelect = document.getElementById('gradeSelect');
-        const numClassesInput = document.getElementById('numClassesInput');
-        const swapButton = document.getElementById('swapButton');
-        const originalClassesSection = document.getElementById('originalClassesSection');
-        const originalClassGridContainer = document.getElementById('originalClassGridContainer');
-        const currentClassGridContainer = document.getElementById('currentClassGridContainer');
-        const messageDisplay = document.getElementById('message');
-        const originalTitle = document.getElementById('originalTitle');
-        const currentTitle = document.getElementById('currentTitle');
-
-        // 應用程式狀態
-        let originalClasses = []; 
-        let currentClasses = [];  
-        let currentGrade = '七';
-        let currentNumClasses = 20; // 預設值改為 20
-
-        // 班級卡片的顏色組
-        const classCardColors = ['color-set-1', 'color-set-2', 'color-set-3', 'color-set-4'];
-
-        // --- 輔助函式 ---
-
-        /** 顯示錯誤或成功訊息。 */
-        function showMessage(text, type = 'error') {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `mt-6 text-center font-medium ${type === 'error' ? 'text-red-500' : 'text-blue-600'}`;
-            setTimeout(() => {
-                messageDisplay.textContent = '';
-            }, 3000); 
-        }
-
-        /** 檢查兩個陣列是否為錯排 (Derangement)。 */
-        function isDerangement(arr1, arr2) {
-            if (arr1.length !== arr2.length) return false;
-            for (let i = 0; i < arr1.length; i++) {
-                if (arr1[i] === arr2[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        /** 執行 Fisher-Yates 算法打亂陣列。 */
-        function fisherYatesShuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [
-                    array[randomIndex], array[currentIndex]];
-            }
-        }
-
-        // --- 核心邏輯函式 ---
-
-        /** 根據內容和樣式創建單一卡片的 DOM 元素。 */
-        function createCardElement(content, colorClass) { 
-            const card = document.createElement('div');
-            card.className = `class-card ${colorClass}`;
-
-            // 卡片名稱排版
-            const gradeMatch = content.match(/(\S+年)(\d+)(班)/);
-            if (gradeMatch) {
-                
-                const gradeText = document.createElement('span');
-                gradeText.className = 'class-text-sm whitespace-nowrap';
-                gradeText.textContent = gradeMatch[1]; 
-                card.appendChild(gradeText);
-                
-                const classNumberText = document.createElement('span');
-                classNumberText.className = 'class-text-lg whitespace-nowrap text-3xl font-extrabold';
-                classNumberText.textContent = gradeMatch[2]; 
-                card.appendChild(classNumberText);
-
-                const classSuffixText = document.createElement('span');
-                classSuffixText.className = 'class-text-sm whitespace-nowrap';
-                classSuffixText.textContent = gradeMatch[3]; 
-                card.appendChild(classSuffixText);
-
-            } else {
-                card.textContent = content;
-            }
-            
-            return card;
-        }
-
-        /** 渲染班級排列到指定的容器中，使用列優先順序排列 (固定 5 行)。 */
-        function renderClasses(container, classes) {
-            container.innerHTML = ''; 
-
-            const N = classes.length;
-            if (N === 0) return;
-            
-            const C_MAX = 5; // 最大欄數
-            const R_MAX = 5; // 固定行數
-            
-            const C_NEEDED = Math.ceil(N / R_MAX); 
-            const TOTAL_GRID_CELLS = R_MAX * C_MAX;
-            
-            // 轉置邏輯：將 Row-first 陣列轉換為 Column-first 視覺順序
-            const transposedClasses = [];
-            for (let k = 0; k < TOTAL_GRID_CELLS; k++) {
-                const r = Math.floor(k / C_MAX); 
-                const c = k % C_MAX; 
-                const i = r + c * R_MAX; // Column-first 索引計算
-
-                if (c < C_NEEDED && i < N) {
-                   transposedClasses.push(classes[i]);
-                } else {
-                   transposedClasses.push(null); 
-                }
-            }
-            
-            // 使用 transposedClasses 陣列進行渲染
-            transposedClasses.forEach((content, index) => {
-                if (content === null) {
-                    const emptyCard = document.createElement('div');
-                    emptyCard.className = "class-card opacity-0 pointer-events-none"; 
-                    container.appendChild(emptyCard);
-                    return; 
-                }
-                
-                const colorClass = classCardColors[index % classCardColors.length] || 'color-set-default';
-                const cardElement = createCardElement(content, colorClass);
-                container.appendChild(cardElement);
-            });
-        }
-        
-        /** 初始化班級陣列及渲染。 */
-        function initializeClasses() {
-            let selectedGrade = gradeSelect.value;
-            let num = parseInt(numClassesInput.value, 10);
-
-            if (isNaN(num) || num < 1 || num > 20) {
-                showMessage('班級總數必須在 1 到 20 之間。', 'error');
-                numClassesInput.value = currentNumClasses;
-                return;
-            }
-
-            const numChanged = currentNumClasses !== num;
-            const gradeChanged = currentGrade !== selectedGrade;
-            
-            currentNumClasses = num;
-            currentGrade = selectedGrade;
-            
-            // --- 狀態更新/陣列重建邏輯 ---
-            if (numChanged || gradeChanged || originalClasses.length === 0) {
-                
-                if (numChanged || originalClasses.length === 0) {
-                    originalClasses = []; 
-                    for (let i = 1; i <= currentNumClasses; i++) {
-                        originalClasses.push(`${currentGrade}年${i}班`);
-                    }
-                    currentClasses = [...originalClasses]; // 初始時 currentClasses 等於 originalClasses
-                } else if (gradeChanged) {
-                    // 更新年級名稱
-                    originalClasses = originalClasses.map((_, i) => `${currentGrade}年${i + 1}班`);
-                    
-                    const originalMap = originalClasses.reduce((acc, name) => {
-                        const match = name.match(/(\d+)/);
-                        if (match) acc[match[1]] = name;
-                        return acc;
-                    }, {});
-                    
-                    currentClasses = currentClasses.map(oldName => {
-                        const classNumberMatch = oldName.match(/(\d+)/);
-                        const classNumber = classNumberMatch ? classNumberMatch[1] : null;
-                        return originalMap[classNumber] || `${currentGrade}年${classNumber}班`;
-                    }).filter(name => name.endsWith('班'));
-                }
-            }
-            
-            swapButton.disabled = false;
-            
-            // 初始狀態: 左側隱藏，右側顯示原始班級順序
-            originalClassesSection.classList.add('hidden');
-            renderClasses(currentClassGridContainer, originalClasses); 
-
-            // 如果左右陣列不同 (曾經交換過)，則顯示左側
-            const isShuffled = originalClasses.some((name, i) => name !== currentClasses[i]);
-            if (isShuffled) {
-                originalClassesSection.classList.remove('hidden');
-                renderClasses(originalClassGridContainer, originalClasses);
-                renderClasses(currentClassGridContainer, currentClasses);
-            }
-        }
-
-        /** 隨機交換班級 (保證錯排，瞬間更新)。 */
-        function shuffleClasses() {
-            swapButton.disabled = true;
-            swapButton.textContent = '🎲 抽籤中...';
-            showMessage('正在進行隨機抽籤，請稍候...', 'success'); 
-            
-            
-            // --- 執行錯排打亂 ---
-            let attempts = 0;
-            let newShuffledArray;
-            do {
-                newShuffledArray = [...originalClasses]; 
-                fisherYatesShuffle(newShuffledArray);
-                attempts++;
-            } while (!isDerangement(originalClasses, newShuffledArray) && attempts < 50);
-            currentClasses = newShuffledArray; // 將新結果賦值給 currentClasses
-            // --- 錯排打亂結束 ---
-
-            // 1. 顯示原始班級排列
-            originalClassesSection.classList.remove('hidden');
-            renderClasses(originalClassGridContainer, originalClasses); 
-            
-            // 2. 重新渲染目前的班級排列 (瞬間更新)
-            renderClasses(currentClassGridContainer, currentClasses); 
-            
-            // 3. 設置一個延遲，以模擬抽籤過程
-            setTimeout(() => {
-                // 重置按鈕和訊息
-                swapButton.textContent = '🚀 隨機交換班級 🚀';
-                swapButton.disabled = false;
-                showMessage('班級交換抽籤完成！', 'success');
-            }, 600); // 延遲 0.6 秒，模擬處理時間
-        }
-
-        /** 處理按鈕點擊事件和初始化設定。 */
-        function setupEventListeners() {
-            numClassesInput.addEventListener('input', initializeClasses);
-            gradeSelect.addEventListener('change', initializeClasses);
-            swapButton.addEventListener('click', shuffleClasses);
-            initializeClasses();
-        }
-
-        // 程式啟動
-        window.onload = function() {
-            setupEventListeners();
-        };
-
-    </script>
-
-</body>
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d3a6dd171d4a86',t:'MTc2MjkyNTU3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
