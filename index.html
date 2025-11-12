@@ -1,169 +1,379 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>獲獎填報網站（DJHS）</title>
-  <style>
-    :root { --border:#e5e7eb; --muted:#6b7280; }
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, "Microsoft JhengHei", sans-serif; margin: 24px; background:#fafafa; }
-    .card { max-width: 920px; margin: 0 auto; padding: 20px; background:#fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
-    h2 { margin: 4px 0 12px; }
-    .muted { color: var(--muted); font-size: 14px; margin: 0 0 12px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 720px){ .row{ grid-template-columns: 1fr; } }
-    label { display: block; margin: 8px 0 6px; font-weight: 600; }
-    input, textarea, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; background:#fff; }
-    textarea { min-height: 96px; }
-    .btn { margin-top: 14px; width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 10px; background:#0f172a; color:#fff; cursor:pointer; }
-    .links a { display:inline-block; margin-right:8px; margin-bottom:6px; }
-    .ok { color:#065f46; }
-    .err { color:#b91c1c; }
-    .help { font-size: 13px; color:#6b7280; margin-top:6px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班級交換抽籤工具</title>
+    <!-- 載入 Tailwind CSS 框架 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 基礎樣式設定 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+
+        /* 網格佈局設置：確保卡片在網格中居中並維持 5 欄 */
+        .class-grid-responsive {
+            /* 預設: 自動適應，保持響應性 */
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            justify-items: center; /* 網格項目居中 */
+            gap: 1rem; /* 增加間距，防止卡片緊貼 */
+        }
+        @media (min-width: 640px) {
+            /* 桌面版修正: 固定為 5 欄 (每欄 120px)，並置中整個網格內容 */
+            .class-grid-responsive {
+                /* 計算 5 欄的總寬度：5 * 120px + 4 * 1rem (16px) = 600 + 64 = 664px */
+                grid-template-columns: repeat(5, 120px); 
+                justify-content: center; /* 置中網格內的內容 */
+                width: fit-content; /* 讓網格容器只佔用需要的空間 */
+                margin: 0 auto; /* 讓整個網格容器在父級內置中 */
+            }
+        }
+        /* 由於 .class-grid-responsive 現在有固定的置中邏輯，
+           父級 .flex-1 會正常運作，確保左右區塊均分空間。*/
+
+
+        /* 定義卡片顏色組 */
+        .color-set-1 { background-color: #e0f2fe; border-color: #90cdf4; color: #2b6cb0; } /* 藍色 */
+        .color-set-2 { background-color: #fefcbf; border-color: #faf089; color: #b7791f; } /* 黃色 */
+        .color-set-3 { background-color: #fed7d7; border-color: #feb2b2; color: #c53030; } /* 紅色 */
+        .color-set-4 { background-color: #e9d8fd; border-color: #d6bcfa; color: #6b46c1; } /* 紫色 */
+        .color-set-default { background-color: #edf2f7; border-color: #cbd5e0; color: #4a5568; } /* 灰色 */
+
+        /* 一般卡片樣式 (長方形，類似撲克牌比例) */
+        .class-card {
+            width: 120px; /* 固定寬度 (撲克牌比例 2:3) */
+            height: 180px; /* 固定高度 */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            justify-self: center; /* 讓卡片在網格單元中置中 */
+            padding: 0.5rem;
+            border: 2px solid;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+        }
+        .class-card:hover {
+            transform: scale(1.05);
+        }
+
+        /* 文字排版樣式 (確保文字清晰且垂直堆疊) */
+        .class-text-sm { font-size: 0.8em; }
+        .class-text-lg { font-size: 1.8em; font-weight: 800; }
+
+        /* 針對小螢幕調整尺寸 */
+        @media (max-width: 639px) {
+            .class-card {
+                width: 100px; 
+                height: 150px;
+            }
+            .class-text-sm { font-size: 0.7em; }
+            .class-text-lg { font-size: 1.5em; }
+        }
+    </style>
 </head>
-<body>
-  <div class="card">
-    <h2>獲獎填報網站（GitHub Pages）</h2>
-    <p class="muted">① 寫入《獲獎填報紀錄》 ② 追加《司儀稿》（口語式、不含典禮名稱）③ 依範本產出《學生獎懲建議表（公告）》PDF</p>
+<body class="p-4 sm:p-8 min-h-screen flex items-center justify-center">
 
-    <div class="row">
-      <div>
-        <label>班級</label>
-        <input id="klass" placeholder="例如：912" />
-      </div>
-      <div>
-        <label>座號</label>
-        <input id="seat" type="number" min="1" />
-      </div>
+    <div id="app" class="w-full max-w-6xl bg-white p-6 sm:p-10 rounded-xl shadow-2xl border border-gray-100">
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-indigo-700">
+            班級交換抽籤工具
+        </h1>
+        <p class="text-center text-gray-500 mb-8">
+            請設定年級和班級數量，排列會動態更新，然後點擊按鈕進行抽籤交換。
+        </p>
+
+        <!-- 設定區塊 --><div class="flex flex-col md:flex-row gap-4 mb-8 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            
+            <!-- 年級選擇 --><div class="flex-1">
+                <label for="gradeSelect" class="block text-sm font-medium text-indigo-700 mb-1">選擇年級 (七, 八, 九):</label>
+                <select id="gradeSelect" class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    <option value="七">七年級</option>
+                    <option value="八">八年級</option>
+                    <option value="九">九年級</option>
+                </select>
+            </div>
+
+            <!-- 班級數輸入 --><div class="flex-1">
+                <label for="numClassesInput" class="block text-sm font-medium text-indigo-700 mb-1">班級總數 (1 - 20):</label>
+                <input type="number" id="numClassesInput" min="1" max="20" value="15" 
+                       class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
+                       placeholder="輸入班級數">
+            </div>
+        </div>
+
+        <!-- 班級顯示區塊 --><div id="classDisplays" class="flex flex-col lg:flex-row gap-8 mb-8">
+            
+            <!-- 原始班級排列 (左側) -->
+            <div id="originalClassesSection" class="flex-1 p-4 border border-gray-200 rounded-lg bg-gray-50 hidden">
+                <h2 id="originalTitle" class="text-xl font-bold text-gray-700 mb-4 text-center">原始班級排列</h2>
+                <div id="originalClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
+                    <!-- 原始班級卡片將會被 JavaScript 插入到這裡 --></div>
+            </div>
+
+            <!-- 目前的班級排列 (右側) -->
+            <div id="shuffledClassesSection" class="flex-1 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+                <h2 id="currentTitle" class="text-xl font-bold text-indigo-700 mb-4 text-center">目前的班級排列</h2>
+                <div id="currentClassGridContainer" class="class-grid-responsive grid gap-4 transition-opacity duration-300">
+                    <!-- 班級卡片將會被 JavaScript 插入到這裡 --></div>
+            </div>
+        </div>
+
+
+        <!-- 交換按鈕 --><div class="text-center">
+            <button id="swapButton" disabled
+                    class="px-10 py-4 text-xl font-bold text-white bg-green-600 rounded-xl shadow-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
+                🚀 隨機交換班級 🚀
+            </button>
+        </div>
+
+        <!-- 訊息顯示區 --><p id="message" class="mt-6 text-center text-red-500 font-medium"></p>
     </div>
 
-    <div class="row">
-      <div>
-        <label>姓名</label>
-        <input id="name" />
-      </div>
-      <div>
-        <label>頒獎日期</label>
-        <input id="awardDate" type="date" />
-      </div>
-    </div>
+    <script>
+        // --- 變數初始化 ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
-    <div>
-      <label>獎項名稱</label>
-      <input id="award" placeholder="例如：第一次段考" />
-    </div>
+        // DOM 元素參考
+        const gradeSelect = document.getElementById('gradeSelect');
+        const numClassesInput = document.getElementById('numClassesInput');
+        const swapButton = document.getElementById('swapButton');
+        const originalClassesSection = document.getElementById('originalClassesSection');
+        const originalClassGridContainer = document.getElementById('originalClassGridContainer');
+        const currentClassGridContainer = document.getElementById('currentClassGridContainer');
+        const messageDisplay = document.getElementById('message');
+        const originalTitle = document.getElementById('originalTitle');
+        const currentTitle = document.getElementById('currentTitle');
 
-    <div>
-      <label>得獎理由（事蹟）</label>
-      <textarea id="reason" placeholder="例如：第一名"></textarea>
-    </div>
+        // 應用程式狀態
+        let originalClasses = []; 
+        let currentClasses = [];  
+        let currentGrade = '七';
+        let currentNumClasses = 15;
 
-    <div class="row">
-      <div>
-        <label>獎懲種類</label>
-        <select id="awardType">
-          <option value="嘉獎">嘉獎</option>
-          <option value="小功">小功</option>
-          <option value="大功">大功</option>
-        </select>
-      </div>
-      <div>
-        <label>幾支</label>
-        <select id="awardCount">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </div>
-    </div>
+        // 班級卡片的顏色組
+        const classCardColors = ['color-set-1', 'color-set-2', 'color-set-3', 'color-set-4'];
 
-    <p class="help">檔名規則：學生獎懲建議表（公告）_班級-座號-姓名-獲獎原因。</p>
+        // --- 輔助函式 ---
 
-    <button class="btn" id="submitBtn" type="button">送出並產出文件</button>
+        /** 顯示錯誤或成功訊息。 */
+        function showMessage(text, type = 'error') {
+            messageDisplay.textContent = text;
+            messageDisplay.className = `mt-6 text-center font-medium ${type === 'error' ? 'text-red-500' : 'text-blue-600'}`;
+            setTimeout(() => {
+                messageDisplay.textContent = '';
+            }, 3000); 
+        }
 
-    <div id="result" style="margin-top:18px"></div>
-  </div>
+        /** 檢查兩個陣列是否為錯排 (Derangement)。 */
+        function isDerangement(arr1, arr2) {
+            if (arr1.length !== arr2.length) return false;
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] === arr2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
 
-  <script>
-    // 你的「新」GAS Web App /exec（非網域版）
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1l_0qGXGY7waOREYCdWZ0PYvQ96b-Qz-ZF_hYRB5-4NsWalEeKxSPHf9agV3uxbxsfg/exec';
+        /** 執行 Fisher-Yates 算法打亂陣列。 */
+        function fisherYatesShuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+        }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const $ = id => document.getElementById(id);
+        // --- 核心邏輯函式 ---
 
-      // 預設今天日期
-      if (!$('awardDate').value) {
-        $('awardDate').value = new Date().toISOString().slice(0,10);
-      }
+        /** 根據內容和樣式創建單一卡片的 DOM 元素。 */
+        function createCardElement(content, colorClass) { 
+            const card = document.createElement('div');
+            card.className = `class-card ${colorClass}`;
 
-      $('submitBtn').addEventListener('click', async () => {
-        const payload = {
-          klass: $('klass').value.trim(),
-          seat: $('seat').value.trim(),
-          name: $('name').value.trim(),
-          award: $('award').value.trim(),
-          reason: $('reason').value.trim(),
-          awardDate: $('awardDate').value,
-          awardType: $('awardType').value,
-          awardCount: $('awardCount').value
+            // 卡片名稱排版
+            const gradeMatch = content.match(/(\S+年)(\d+)(班)/);
+            if (gradeMatch) {
+                
+                const gradeText = document.createElement('span');
+                gradeText.className = 'class-text-sm whitespace-nowrap';
+                gradeText.textContent = gradeMatch[1]; 
+                card.appendChild(gradeText);
+                
+                const classNumberText = document.createElement('span');
+                classNumberText.className = 'class-text-lg whitespace-nowrap text-3xl font-extrabold';
+                classNumberText.textContent = gradeMatch[2]; 
+                card.appendChild(classNumberText);
+
+                const classSuffixText = document.createElement('span');
+                classSuffixText.className = 'class-text-sm whitespace-nowrap';
+                classSuffixText.textContent = gradeMatch[3]; 
+                card.appendChild(classSuffixText);
+
+            } else {
+                card.textContent = content;
+            }
+            
+            return card;
+        }
+
+        /** 渲染班級排列到指定的容器中，使用列優先順序排列 (固定 5 行)。 */
+        function renderClasses(container, classes) {
+            container.innerHTML = ''; 
+
+            const N = classes.length;
+            if (N === 0) return;
+            
+            const C_MAX = 5; // 最大欄數
+            const R_MAX = 5; // 固定行數
+            
+            const C_NEEDED = Math.ceil(N / R_MAX); 
+            const TOTAL_GRID_CELLS = R_MAX * C_MAX;
+            
+            // 轉置邏輯：將 Row-first 陣列轉換為 Column-first 視覺順序
+            const transposedClasses = [];
+            for (let k = 0; k < TOTAL_GRID_CELLS; k++) {
+                const r = Math.floor(k / C_MAX); 
+                const c = k % C_MAX; 
+                const i = r + c * R_MAX; // Column-first 索引計算
+
+                if (c < C_NEEDED && i < N) {
+                   transposedClasses.push(classes[i]);
+                } else {
+                   transposedClasses.push(null); 
+                }
+            }
+            
+            // 使用 transposedClasses 陣列進行渲染
+            transposedClasses.forEach((content, index) => {
+                if (content === null) {
+                    const emptyCard = document.createElement('div');
+                    emptyCard.className = "class-card opacity-0 pointer-events-none"; 
+                    container.appendChild(emptyCard);
+                    return; 
+                }
+                
+                const colorClass = classCardColors[index % classCardColors.length] || 'color-set-default';
+                const cardElement = createCardElement(content, colorClass);
+                container.appendChild(cardElement);
+            });
+        }
+        
+        /** 初始化班級陣列及渲染。 */
+        function initializeClasses() {
+            let selectedGrade = gradeSelect.value;
+            let num = parseInt(numClassesInput.value, 10);
+
+            if (isNaN(num) || num < 1 || num > 20) {
+                showMessage('班級總數必須在 1 到 20 之間。', 'error');
+                numClassesInput.value = currentNumClasses;
+                return;
+            }
+
+            const numChanged = currentNumClasses !== num;
+            const gradeChanged = currentGrade !== selectedGrade;
+            
+            currentNumClasses = num;
+            currentGrade = selectedGrade;
+            
+            // --- 狀態更新/陣列重建邏輯 ---
+            if (numChanged || gradeChanged || originalClasses.length === 0) {
+                
+                if (numChanged || originalClasses.length === 0) {
+                    originalClasses = []; 
+                    for (let i = 1; i <= currentNumClasses; i++) {
+                        originalClasses.push(`${currentGrade}年${i}班`);
+                    }
+                    currentClasses = [...originalClasses]; // 初始時 currentClasses 等於 originalClasses
+                } else if (gradeChanged) {
+                    // 更新年級名稱
+                    originalClasses = originalClasses.map((_, i) => `${currentGrade}年${i + 1}班`);
+                    
+                    const originalMap = originalClasses.reduce((acc, name) => {
+                        const match = name.match(/(\d+)/);
+                        if (match) acc[match[1]] = name;
+                        return acc;
+                    }, {});
+                    
+                    currentClasses = currentClasses.map(oldName => {
+                        const classNumberMatch = oldName.match(/(\d+)/);
+                        const classNumber = classNumberMatch ? classNumberMatch[1] : null;
+                        return originalMap[classNumber] || `${currentGrade}年${classNumber}班`;
+                    }).filter(name => name.endsWith('班'));
+                }
+            }
+            
+            swapButton.disabled = false;
+            
+            // 初始狀態: 左側隱藏，右側顯示原始班級順序
+            originalClassesSection.classList.add('hidden');
+            renderClasses(currentClassGridContainer, originalClasses); 
+
+            // 如果左右陣列不同 (曾經交換過)，則顯示左側
+            const isShuffled = originalClasses.some((name, i) => name !== currentClasses[i]);
+            if (isShuffled) {
+                originalClassesSection.classList.remove('hidden');
+                renderClasses(originalClassGridContainer, originalClasses);
+                renderClasses(currentClassGridContainer, currentClasses);
+            }
+        }
+
+        /** 隨機交換班級 (保證錯排，瞬間更新)。 */
+        function shuffleClasses() {
+            swapButton.disabled = true;
+            swapButton.textContent = '🎲 抽籤中...';
+            showMessage('正在進行隨機抽籤，請稍候...', 'success'); 
+            
+            
+            // --- 執行錯排打亂 ---
+            let attempts = 0;
+            let newShuffledArray;
+            do {
+                newShuffledArray = [...originalClasses]; 
+                fisherYatesShuffle(newShuffledArray);
+                attempts++;
+            } while (!isDerangement(originalClasses, newShuffledArray) && attempts < 50);
+            currentClasses = newShuffledArray; // 將新結果賦值給 currentClasses
+            // --- 錯排打亂結束 ---
+
+            // 1. 顯示原始班級排列
+            originalClassesSection.classList.remove('hidden');
+            renderClasses(originalClassGridContainer, originalClasses); 
+            
+            // 2. 重新渲染目前的班級排列 (瞬間更新)
+            renderClasses(currentClassGridContainer, currentClasses); 
+            
+            // 3. 設置一個延遲，以模擬抽籤過程
+            setTimeout(() => {
+                // 重置按鈕和訊息
+                swapButton.textContent = '🚀 隨機交換班級 🚀';
+                swapButton.disabled = false;
+                showMessage('班級交換抽籤完成！', 'success');
+            }, 600); // 延遲 0.6 秒，模擬處理時間
+        }
+
+        /** 處理按鈕點擊事件和初始化設定。 */
+        function setupEventListeners() {
+            numClassesInput.addEventListener('input', initializeClasses);
+            gradeSelect.addEventListener('change', initializeClasses);
+            swapButton.addEventListener('click', shuffleClasses);
+            initializeClasses();
+        }
+
+        // 程式啟動
+        window.onload = function() {
+            setupEventListeners();
         };
 
-        // 必填驗證
-        const required = ['klass','seat','name','award','reason','awardDate','awardType','awardCount'];
-        for (const k of required) {
-          if (!String(payload[k] || '').trim()) {
-            return showMsg('請完整填寫必填欄位', true);
-          }
-        }
+    </script>
 
-        toggleBtn(true);
-        try {
-          // x-www-form-urlencoded → GAS 以 e.parameter 解析
-          const body = new URLSearchParams(payload).toString();
-          const res  = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-            body
-          });
-
-          const ct = res.headers.get('content-type') || '';
-          const data = ct.includes('application/json') ? await res.json() : null;
-
-          if (!res.ok) throw new Error('伺服器狀態 ' + res.status);
-          if (!data || !data.ok) throw new Error((data && data.message) ? data.message : '未知錯誤');
-
-          showLinks(data);
-        } catch (err) {
-          showMsg('發生錯誤：' + (err?.message || err), true);
-        } finally {
-          toggleBtn(false);
-        }
-      });
-
-      function showLinks(d){
-        $('result').innerHTML = `
-          <div class="links ok">
-            <p><strong>完成！</strong> 已寫入並產出文件。</p>
-            <p>• 紀錄表：<a href="${d.sheetUrl}" target="_blank" rel="noopener">開啟試算表</a></p>
-            <p>• 司儀稿：<a href="${d.mcDocUrl}" target="_blank" rel="noopener">Google 文件</a>｜<a href="${d.mcPdfUrl}" target="_blank" rel="noopener">PDF</a></p>
-            <p>• 公告表：<a href="${d.noticeDocUrl}" target="_blank" rel="noopener">Google 文件</a>｜<a href="${d.noticePdfUrl}" target="_blank" rel="noopener">PDF</a></p>
-          </div>`;
-      }
-
-      function showMsg(msg, isErr=false){
-        $('result').innerHTML = `<p class="${isErr?'err':'ok'}">${msg}</p>`;
-      }
-
-      function toggleBtn(disabled){
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = disabled;
-        btn.textContent = disabled ? '處理中…' : '送出並產出文件';
-      }
-    });
-  </script>
 </body>
 </html>
