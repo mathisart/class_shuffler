@@ -21,17 +21,13 @@
             gap: 1rem; /* 增加間距，防止卡片緊貼 */
         }
         @media (min-width: 640px) {
-            /* 桌面版修正: 固定為 5 欄 (每欄 120px)，並置中整個網格內容 */
+            /* 桌面版修正: 重新使用彈性寬度 (1fr)，解決溢出問題，並確保置中 */
             .class-grid-responsive {
-                /* 計算 5 欄的總寬度：5 * 120px + 4 * 1rem (16px) = 600 + 64 = 664px */
-                grid-template-columns: repeat(5, 120px); 
+                grid-template-columns: repeat(5, 1fr); /* 使用 1fr 確保彈性適應寬度 */
                 justify-content: center; /* 置中網格內的內容 */
-                width: fit-content; /* 讓網格容器只佔用需要的空間 */
-                margin: 0 auto; /* 讓整個網格容器在父級內置中 */
             }
         }
-        /* 由於 .class-grid-responsive 現在有固定的置中邏輯，
-           父級 .flex-1 會正常運作，確保左右區塊均分空間。*/
+        /* 移除之前嘗試置中時添加的固定寬度和 margin: auto，讓 Flexbox 重新負責均分 */
 
 
         /* 定義卡片顏色組 */
@@ -43,8 +39,11 @@
 
         /* 一般卡片樣式 (長方形，類似撲克牌比例) */
         .class-card {
-            width: 120px; /* 固定寬度 (撲克牌比例 2:3) */
-            height: 180px; /* 固定高度 */
+            /* 修正: 移除固定寬度，改用 max-width 和 max-height，讓其在空間不足時能縮小 */
+            width: 100%; /* 佔滿網格單元寬度 */
+            max-width: 120px; /* 最大寬度不超過撲克牌尺寸 */
+            height: 180px; /* 固定高度，但會在空間不足時被擠壓 */
+            
             border-radius: 0.5rem;
             box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
             transition: transform 0.2s;
@@ -56,6 +55,7 @@
             flex-direction: column; 
             justify-content: center;
             align-items: center;
+            text-align: center; /* 確保文字排版中心對齊 */
         }
         .class-card:hover {
             transform: scale(1.05);
@@ -68,7 +68,7 @@
         /* 針對小螢幕調整尺寸 */
         @media (max-width: 639px) {
             .class-card {
-                width: 100px; 
+                max-width: 100px; 
                 height: 150px;
             }
             .class-text-sm { font-size: 0.7em; }
@@ -100,7 +100,7 @@
 
             <!-- 班級數輸入 --><div class="flex-1">
                 <label for="numClassesInput" class="block text-sm font-medium text-indigo-700 mb-1">班級總數 (1 - 20):</label>
-                <input type="number" id="numClassesInput" min="1" max="20" value="15" 
+                <input type="number" id="numClassesInput" min="1" max="20" value="20" 
                        class="w-full p-3 border border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
                        placeholder="輸入班級數">
             </div>
@@ -154,7 +154,7 @@
         let originalClasses = []; 
         let currentClasses = [];  
         let currentGrade = '七';
-        let currentNumClasses = 15;
+        let currentNumClasses = 20; // 預設值改為 20
 
         // 班級卡片的顏色組
         const classCardColors = ['color-set-1', 'color-set-2', 'color-set-3', 'color-set-4'];
